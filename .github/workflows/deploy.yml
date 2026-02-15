@@ -48,7 +48,8 @@ jobs:
         # In production this would be: python src/main.py
         
         export PYTHONPATH=$PYTHONPATH:.
-        python src/generator/html_builder.py
+        # python src/generator/html_builder.py
+        python src/main.py
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
