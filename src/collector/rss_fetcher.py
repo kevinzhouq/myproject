@@ -4,17 +4,26 @@ import time
 from email.utils import parsedate_to_datetime
 from src.config import Config
 
+import socket
+
 class RSSFetcher:
     def fetch_all(self):
         """
         Fetch articles from all configured RSS feeds.
         Returns a list of article dictionaries.
         """
+        # Set global socket timeout to prevent hangs
+        socket.setdefaulttimeout(30)
+        
         all_articles = []
+        print(f"Starting RSS fetch for {len(Config.RSS_FEEDS)} feeds...")
+        
         for url in Config.RSS_FEEDS:
             print(f"Fetching RSS: {url} ...")
+            start_time = time.time()
             try:
-                feed = feedparser.parse(url)
+                # Use a custom User-Agent to avoid being blocked
+                feed = feedparser.parse(url, agent="AI-Sports-Daily/1.0")
                 
                 # Check for bozo error (encoding/XML issues)
                 if feed.bozo:
@@ -25,6 +34,8 @@ class RSSFetcher:
                     continue
 
                 source_name = feed.feed.get('title', 'Unknown RSS')
+                elapsed = time.time() - start_time
+                print(f"  Success: {len(feed.entries)} entries in {elapsed:.2f}s")
                 
                 # Limit to latest 10 entries per feed to avoid overwhelming
                 entries_to_process = feed.entries[:10]
@@ -34,8 +45,10 @@ class RSSFetcher:
                     if article:
                         all_articles.append(article)
                         
+            except socket.timeout:
+                print(f"  Error: Timeout fetching {url}")
             except Exception as e:
-                print(f"Error fetching {url}: {e}")
+                print(f"  Error fetching {url}: {e}")
                 
         print(f"Total RSS articles fetched: {len(all_articles)}")
         return all_articles

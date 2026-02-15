@@ -31,17 +31,17 @@ class Summarizer:
         3. Write a one-sentence comment/insight (one_sentence_comment).
         4. Rate importance (1-10) based on relevance to AI or Sports Science (score).
         5. Assign tags (max 3) (tags).
-        6. Categorize into: "AI", "Science", "Gear", "Training", "Industry", "Other" (category).
+        6. Categorize into one of: "AI前沿", "运动科学", "装备评测", "商业投资" (category). Use "AI前沿" for general AI/Tech, "运动科学" for running/training.
         
         Response Format (JSON ONLY):
-        {{
+        {
             "title_zh": "...",
             "summary_zh": "...",
             "one_sentence_comment": "...",
             "score": 8,
             "tags": ["Tag1", "Tag2"],
-            "category": "AI"
-        }}
+            "category": "AI前沿"
+        }
         """
         
         response_text = self.llm.generate(prompt)
@@ -65,7 +65,24 @@ class Summarizer:
             article['comment'] = data.get('one_sentence_comment', '')
             article['score'] = int(data.get('score', 5))
             article['tags'] = data.get('tags', [])
-            article['category'] = data.get('category', 'Other')
+            
+            # Category Mapping
+            cat_map = {
+                "AI前沿": "ai",
+                "运动科学": "science",
+                "装备评测": "gear",
+                "商业投资": "business"
+            }
+            
+            raw_cat = data.get('category', 'AI前沿')
+            # Normalize rudimentary
+            if "AI" in raw_cat: raw_cat = "AI前沿"
+            elif "运动" in raw_cat or "科学" in raw_cat or "训练" in raw_cat: raw_cat = "运动科学"
+            elif "装备" in raw_cat: raw_cat = "装备评测"
+            elif "商业" in raw_cat or "投资" in raw_cat: raw_cat = "商业投资"
+            
+            article['category'] = raw_cat
+            article['category_code'] = cat_map.get(raw_cat, 'ai') # Default to AI
             article['importance'] = article['score'] # Align with existing logic
             
             return article
@@ -98,4 +115,6 @@ class Summarizer:
         article['score'] = 5
         article['importance'] = 5
         article['tags'] = ['Raw']
+        article['category'] = 'AI前沿'
+        article['category_code'] = 'ai'
         return article

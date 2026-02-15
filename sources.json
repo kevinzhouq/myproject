@@ -1,0 +1,79 @@
+{
+  "rss": [
+    {
+      "url": "https://www.jiqizhixin.com/rss",
+      "category": "AI前沿",
+      "name": "机器之心"
+    },
+    {
+      "url": "https://36kr.com/feed",
+      "category": "商业投资",
+      "name": "36氪"
+    },
+    {
+      "url": "https://sspai.com/feed",
+      "category": "AI前沿",
+      "name": "少数派"
+    },
+    {
+      "url": "https://www.runnersworld.com/rss/all.xml",
+      "category": "运动科学",
+      "name": "Runners World"
+    },
+    {
+      "url": "https://www.reddit.com/r/MachineLearning/.rss",
+      "category": "AI前沿",
+      "name": "r/MachineLearning"
+    },
+    {
+      "url": "https://www.reddit.com/r/LocalLLaMA/.rss",
+      "category": "AI前沿",
+      "name": "r/LocalLLaMA"
+    },
+    {
+      "url": "https://www.reddit.com/r/artificial/.rss",
+      "category": "AI前沿",
+      "name": "r/artificial"
+    }
+  ],
+  "reddit_subreddits": [
+    {
+      "name": "ArtificialIntelligence",
+      "category": "AI前沿"
+    },
+    {
+      "name": "MachineLearning",
+      "category": "AI前沿"
+    },
+    {
+      "name": "running",
+      "category": "运动科学"
+    },
+    {
+      "name": "AdvancedRunning",
+      "category": "运动科学"
+    },
+    {
+      "name": "MarathonTraining",
+      "category": "运动科学"
+    }
+  ],
+  "keywords": [
+    "AI",
+    "LLM",
+    "大模型",
+    "Transformer",
+    "Agent",
+    "Marathon",
+    "Running",
+    "Training",
+    "Recovery",
+    "Nutrition",
+    "Zone 2",
+    "Nike",
+    "Adidas",
+    "Garmin",
+    "Coros",
+    "Suunto"
+  ]
+}

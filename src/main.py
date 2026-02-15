@@ -82,7 +82,6 @@ def main():
     
     # Scan output dir for existing dates
     history = []
-    output_dir = builder.OUTPUT_DIR # Access output dir from builder instance logic? 
     # Use hardcoded path logic matching builder
     base_output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
     

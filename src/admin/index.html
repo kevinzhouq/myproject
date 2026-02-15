@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sports Daily - 配置管理</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        /* List Items */
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .item {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .item:last-child {
+            border-bottom: none;
+        }
+
+        .item input,
+        .item select {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+
+        .header-row {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background-color: #f1f5f9;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.875rem;
+        }
+
+        .btn-add {
+            background-color: #10b981;
+            color: white;
+        }
+
+        /* Keywords Tag Input */
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+            min-height: 40px;
+        }
+
+        .tag {
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            color: #64748b;
+            font-weight: bold;
+        }
+
+        .tags-input input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 60px;
+        }
+
+        .actions {
+            position: sticky;
+            bottom: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛠️ 配置管理</h1>
+
+        <!-- Datalist for Categories -->
+        <datalist id="category-list">
+            <!-- Populated by JS -->
+        </datalist>
+
+        <!-- RSS Feeds -->
+        <div class="card">
+            <div class="card-header">
+                <h2>RSS 订阅源</h2>
+                <button class="btn-add" onclick="addItem('rss')">添加 RSS</button>
+            </div>
+            <div class="header-row">
+                <div style="width: 150px;">名称</div>
+                <div style="width: 120px;">分类</div>
+                <div class="flex-1">URL</div>
+                <div style="width: 30px;"></div>
+            </div>
+            <div id="rss-list" class="item-list">
+                <!-- Items will be injected here -->
+            </div>
+        </div>
+
+        <!-- Reddit Subreddits -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Reddit 版块</h2>
+                <button class="btn-add" onclick="addItem('reddit')">添加 Subreddit</button>
+            </div>
+            <div class="header-row">
+                <div style="width: 200px;">版块名称</div>
+                <div class="flex-1">分类</div>
+                <div style="width: 30px;"></div>
+            </div>
+            <div id="reddit-list" class="item-list">
+                <!-- Items will be injected here -->
+            </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="card">
+            <div class="card-header">
+                <h2>筛选关键词</h2>
+            </div>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">只有包含这些关键词的文章才会被选中（不区分大小写）</p>
+            <div class="tags-input" id="keywords-container" onclick="document.getElementById('keyword-input').focus()">
+                <input type="text" id="keyword-input" placeholder="输入关键词按回车添加...">
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-primary" onclick="saveConfig()"
+                style="font-size: 1.1rem; padding: 10px 30px;">保存配置</button>
+            <button class="btn-primary" onclick="runCollection()"
+                style="font-size: 1.1rem; padding: 10px 30px; background-color: #f59e0b; margin-left: 10px;">立即采集</button>
+        </div>
+    </div>
+
+    <script>
+        let configData = {
+            rss: [],
+            reddit_subreddits: [],
+            keywords: []
+        };
+
+        // Load Config
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                configData = await res.json();
+                renderAll();
+            } catch (e) {
+                alert('加载配置失败: ' + e);
+            }
+        }
+
+        function renderAll() {
+            updateCategoryDatalist();
+            renderRSS();
+            renderReddit();
+            renderKeywords();
+        }
+
+        function updateCategoryDatalist() {
+            const categories = ['AI前沿', '运动科学', '装备评测', '商业投资'];
+            const datalist = document.getElementById('category-list');
+            datalist.innerHTML = '';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                datalist.appendChild(opt);
+            });
+        }
+
+        function renderRSS() {
+            const list = document.getElementById('rss-list');
+            list.innerHTML = '';
+
+            // Sort by Category then Name
+            const sortedRSS = [...configData.rss].map((item, index) => ({ ...item, originalIndex: index }));
+            sortedRSS.sort((a, b) => {
+                const catA = a.category || '';
+                const catB = b.category || '';
+                if (catA !== catB) return catA.localeCompare(catB, 'zh');
+                return (a.name || '').localeCompare(b.name || '', 'zh');
+            });
+
+            sortedRSS.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <input type="text" placeholder="名称" value="${item.name || ''}" onchange="updateItem('rss', ${item.originalIndex}, 'name', this.value)" style="width: 150px;">
+                    <input type="text" list="category-list" placeholder="分类" value="${item.category || ''}" onchange="updateItem('rss', ${item.originalIndex}, 'category', this.value)" style="width: 120px;">
+                    <input type="text" class="flex-1" placeholder="RSS URL" value="${item.url || ''}" onchange="updateItem('rss', ${item.originalIndex}, 'url', this.value)">
+                    <button class="btn-danger" onclick="deleteItem('rss', ${item.originalIndex})">×</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderReddit() {
+            const list = document.getElementById('reddit-list');
+            list.innerHTML = '';
+            // Handle legacy list of strings if necessary, though now we use dicts
+            configData.reddit_subreddits.forEach((item, index) => {
+                const name = typeof item === 'string' ? item : item.name;
+                const category = typeof item === 'string' ? '' : (item.category || '');
+
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <span style="font-weight: bold; color: #ff4500;">r/</span>
+                    <input type="text" placeholder="Subreddit Name" value="${name}" onchange="updateItem('reddit', ${index}, 'name', this.value)" style="width: 200px;">
+                    <input type="text" class="flex-1" list="category-list" placeholder="分类 (如: AI技术)" value="${category}" onchange="updateItem('reddit', ${index}, 'category', this.value)">
+                    <button class="btn-danger" onclick="deleteItem('reddit', ${index})">×</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function renderKeywords() {
+            const container = document.getElementById('keywords-container');
+            // Remove all tags but keep input
+            const input = document.getElementById('keyword-input');
+            // Clear existing tags (all children except input)
+            while (container.firstChild !== input) {
+                container.removeChild(container.firstChild);
+            }
+
+            configData.keywords.forEach((kw, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.innerHTML = `
+                    ${kw}
+                    <span class="tag-remove" onclick="removeKeyword(${index})">×</span>
+                `;
+                container.insertBefore(tag, input);
+            });
+        }
+
+        // Logic
+        function addItem(type) {
+            if (type === 'rss') {
+                configData.rss.push({ name: '', category: '', url: '' });
+            } else if (type === 'reddit') {
+                configData.reddit_subreddits.push({ name: '', category: '' });
+            }
+            renderAll();
+        }
+
+        function deleteItem(type, index) {
+            if (type === 'rss') configData.rss.splice(index, 1);
+            if (type === 'reddit') configData.reddit_subreddits.splice(index, 1);
+            renderAll();
+        }
+
+        function updateItem(type, index, field, value) {
+            if (type === 'rss') {
+                configData.rss[index][field] = value;
+            } else if (type === 'reddit') {
+                if (typeof configData.reddit_subreddits[index] === 'string') {
+                    // Upgrade to object
+                    configData.reddit_subreddits[index] = { name: configData.reddit_subreddits[index], category: '' };
+                }
+                configData.reddit_subreddits[index][field] = value;
+            }
+            // If category changed, update datalist
+            if (field === 'category') updateCategoryDatalist();
+        }
+
+        // Keyword Input Logic
+        const keywordInput = document.getElementById('keyword-input');
+        keywordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = e.target.value.trim();
+                if (val && !configData.keywords.includes(val)) {
+                    configData.keywords.push(val);
+                    renderKeywords();
+                    e.target.value = '';
+                }
+            }
+            if (e.key === 'Backspace' && e.target.value === '' && configData.keywords.length > 0) {
+                configData.keywords.pop();
+                renderKeywords();
+            }
+        });
+
+        function removeKeyword(index) {
+            configData.keywords.splice(index, 1);
+            renderKeywords();
+        }
+
+        async function saveConfig() {
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(configData)
+                });
+                if (res.ok) {
+                    alert('配置已保存! 🎉');
+                    // Reload to ensure consistency
+                    loadConfig();
+                } else {
+                    alert('保存失败.');
+                }
+            } catch (e) {
+                alert('保存错误: ' + e);
+            }
+        }
+
+        async function runCollection() {
+            if (!confirm("确定要立即运行一次数据采集吗？这可能需要几分钟时间。")) return;
+
+            try {
+                const res = await fetch('/api/run', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('已触发后台采集任务。请留意终端输出或稍后刷新页面查看结果。');
+                } else {
+                    alert('触发失败: ' + data.message);
+                }
+            } catch (e) {
+                alert('请求错误: ' + e);
+            }
+        }
+
+        // Init
+        loadConfig();
+    </script>
+</body>
+
+</html>
