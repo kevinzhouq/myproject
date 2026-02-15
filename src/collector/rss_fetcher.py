@@ -18,7 +18,10 @@ class RSSFetcher:
         all_articles = []
         print(f"Starting RSS fetch for {len(Config.RSS_FEEDS)} feeds...")
         
-        for url in Config.RSS_FEEDS:
+        for source in Config.RSS_FEEDS:
+            url = source['url']
+            suggested_category = source['category']
+            
             print(f"Fetching RSS: {url} ...")
             start_time = time.time()
             try:
@@ -33,7 +36,7 @@ class RSSFetcher:
                     print(f"  No entries found in {url}")
                     continue
 
-                source_name = feed.feed.get('title', 'Unknown RSS')
+                source_name = source['name'] if source['name'] != 'Unknown' else feed.feed.get('title', 'Unknown RSS')
                 elapsed = time.time() - start_time
                 print(f"  Success: {len(feed.entries)} entries in {elapsed:.2f}s")
                 
@@ -41,7 +44,7 @@ class RSSFetcher:
                 entries_to_process = feed.entries[:10]
                 
                 for entry in entries_to_process:
-                    article = self._normalize_entry(entry, source_name)
+                    article = self._normalize_entry(entry, source_name, suggested_category)
                     if article:
                         all_articles.append(article)
                         
@@ -53,7 +56,7 @@ class RSSFetcher:
         print(f"Total RSS articles fetched: {len(all_articles)}")
         return all_articles
 
-    def _normalize_entry(self, entry, source_name):
+    def _normalize_entry(self, entry, source_name, suggested_category):
         """Convert feedparser entry to standard article dict"""
         try:
             title = entry.get('title', '').strip()
@@ -71,9 +74,6 @@ class RSSFetcher:
                         content = c.value
                         break
             
-            # Clean content (basic) - specialized cleaning can be in Processor
-            # For now just keep it as is, or maybe strip HTML tags if needed later
-            
             # Date handling
             published_struct = entry.get('published_parsed') or entry.get('updated_parsed')
             if published_struct:
@@ -86,6 +86,7 @@ class RSSFetcher:
                 'summary': content, # This is often HTML
                 'url': link,
                 'source': source_name,
+                'suggested_category': suggested_category, # Pass config category to summarize
                 'published_at': published_dt,
                 'type': 'rss',
                 'raw': entry # Keep raw just in case

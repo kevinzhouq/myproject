@@ -26,7 +26,10 @@ class RedditFetcher:
             return []
 
         all_articles = []
-        for subreddit_name in Config.REDDIT_SUBREDDITS:
+        for source in Config.REDDIT_SUBREDDITS:
+            subreddit_name = source['name']
+            suggested_category = source['category']
+            
             print(f"Fetching Reddit: r/{subreddit_name} ...")
             try:
                 subreddit = self.reddit.subreddit(subreddit_name)
@@ -35,7 +38,7 @@ class RedditFetcher:
                     if submission.stickied:
                         continue
                         
-                    article = self._normalize_submission(submission, subreddit_name)
+                    article = self._normalize_submission(submission, subreddit_name, suggested_category)
                     if article:
                         all_articles.append(article)
                         
@@ -45,16 +48,9 @@ class RedditFetcher:
         print(f"Total Reddit articles fetched: {len(all_articles)}")
         return all_articles
 
-    def _normalize_submission(self, submission, subreddit_name):
+    def _normalize_submission(self, submission, subreddit_name, suggested_category):
         try:
-            # Skip if it's just a self post with no text (unless title is very informative?)
-            # But let's keep it simple.
-            
             content = submission.selftext
-            # If it's a link post, content is the URL usually, but we want the text content if any
-            # For link posts, we might want to follow the link, but that's complex. 
-            # For now, if it's a link, we use the title and link.
-            
             published_dt = datetime.datetime.fromtimestamp(submission.created_utc)
 
             return {
@@ -62,6 +58,7 @@ class RedditFetcher:
                 'summary': content, 
                 'url': submission.url,
                 'source': f"r/{subreddit_name}",
+                'suggested_category': suggested_category,
                 'published_at': published_dt,
                 'type': 'reddit',
                 'score': submission.score,

@@ -64,7 +64,8 @@
                 <h2 class="section-title">🔥 今日头条</h2>
                 <div class="cards-grid">
                     {% for article in headlines %}
-                    <article class="card headline-card category-{{ article.category_code }}">
+                    <article class="card headline-card category-{{ article.category_code }}"
+                        data-category="{{ article.category_code }}">
                         <div class="card-header">
                             <span class="category-tag">{{ article.category }}</span>
                             <span class="score-tag">★ {{ article.importance }}</span>

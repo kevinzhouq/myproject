@@ -16,7 +16,7 @@ class Summarizer:
         # Prepare content (truncate to avoid exceeding context window)
         # 1 token ~= 4 chars, 4096 tokens ~= 16000 chars. 
         # Safe limit: 3000 chars of content
-        content_snippet = article['summary'][:3000]
+        suggested_cat = article.get('suggested_category', 'AI前沿')
         
         prompt = f"""
         You are an editor for "AI Sports Daily". Analyze the following article and provide a JSON response in Simplified Chinese.
@@ -24,6 +24,7 @@ class Summarizer:
         Article:
         Title: {article['title']}
         Content: {content_snippet}
+        Suggested Category: {suggested_cat}
         
         Task:
         1. Translate title to Chinese (title_zh).
@@ -31,17 +32,18 @@ class Summarizer:
         3. Write a one-sentence comment/insight (one_sentence_comment).
         4. Rate importance (1-10) based on relevance to AI or Sports Science (score).
         5. Assign tags (max 3) (tags).
-        6. Categorize into one of: "AI前沿", "运动科学", "装备评测", "商业投资" (category). Use "AI前沿" for general AI/Tech, "运动科学" for running/training.
+        6. Categorize the article into one of: "AI前沿", "运动科学", "装备评测", "商业投资". 
+           Wait! You MUST prioritize the Suggested Category above unless it is clearly wrong.
         
         Response Format (JSON ONLY):
-        {
+        {{
             "title_zh": "...",
             "summary_zh": "...",
             "one_sentence_comment": "...",
             "score": 8,
             "tags": ["Tag1", "Tag2"],
-            "category": "AI前沿"
-        }
+            "category": "{suggested_cat}"
+        }}
         """
         
         response_text = self.llm.generate(prompt)
@@ -74,15 +76,16 @@ class Summarizer:
                 "商业投资": "business"
             }
             
-            raw_cat = data.get('category', 'AI前沿')
+            raw_cat = data.get('category', suggested_cat).strip()
             # Normalize rudimentary
             if "AI" in raw_cat: raw_cat = "AI前沿"
             elif "运动" in raw_cat or "科学" in raw_cat or "训练" in raw_cat: raw_cat = "运动科学"
             elif "装备" in raw_cat: raw_cat = "装备评测"
             elif "商业" in raw_cat or "投资" in raw_cat: raw_cat = "商业投资"
+            else: raw_cat = suggested_cat # Fallback to suggested if AI hallucinates
             
             article['category'] = raw_cat
-            article['category_code'] = cat_map.get(raw_cat, 'ai') # Default to AI
+            article['category_code'] = cat_map.get(raw_cat, 'ai')
             article['importance'] = article['score'] # Align with existing logic
             
             return article

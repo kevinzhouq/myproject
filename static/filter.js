@@ -41,10 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filterItems(category, items) {
         items.forEach(item => {
-            if (category === 'all' || item.getAttribute('data-category') === category || item.classList.contains(`category-${category}`)) {
-                item.style.display = 'flex'; // Restore display
-                // Add fade in animation if needed
-                item.style.opacity = '1';
+            const itemCat = item.getAttribute('data-category');
+            if (category === 'all' || itemCat === category) {
+                item.style.display = ''; // Restore to default (flex/grid)
+                // Trigger reflow for animation
+                setTimeout(() => item.style.opacity = '1', 10);
             } else {
                 item.style.display = 'none';
                 item.style.opacity = '0';

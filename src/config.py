@@ -24,8 +24,8 @@ class Config:
     MAX_HISTORY_DAYS = 30
     
     # Dynamic Settings (Loaded from JSON)
-    RSS_FEEDS = []
-    REDDIT_SUBREDDITS = []
+    RSS_FEEDS = []          # List of dicts: {name, url, category}
+    REDDIT_SUBREDDITS = []  # List of dicts: {name, category}
     KEYWORDS = []
     
     _sources_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'sources.json')
@@ -47,29 +47,32 @@ class Config:
                     content = f.read().strip()
                     if content:
                         loaded_data = json.loads(content)
-                        # Merge with default structure to avoid missing keys
                         data.update(loaded_data)
             except Exception as e:
                 logger.error(f"Error loading config file: {e}")
-        else:
-            logger.warning("Config file not found. Using defaults.")
 
-        # Parse RSS Feeds
+        # Store complete RSS Feeds (filter out invalid ones)
         cls.RSS_FEEDS = []
         for item in data.get('rss', []):
             if isinstance(item, dict) and item.get('url'):
-                cls.RSS_FEEDS.append(item.get('url'))
+                cls.RSS_FEEDS.append({
+                    'name': item.get('name', 'Unknown'),
+                    'url': item.get('url'),
+                    'category': item.get('category', 'AI前沿')
+                })
             elif isinstance(item, str) and item.strip():
-                # Legacy support for list of strings
-                cls.RSS_FEEDS.append(item.strip())
+                cls.RSS_FEEDS.append({'name': 'Unknown', 'url': item.strip(), 'category': 'AI前沿'})
 
-        # Parse Subreddits
+        # Store complete Subreddits
         cls.REDDIT_SUBREDDITS = []
         for item in data.get('reddit_subreddits', []):
             if isinstance(item, dict) and item.get('name'):
-                cls.REDDIT_SUBREDDITS.append(item.get('name'))
+                cls.REDDIT_SUBREDDITS.append({
+                    'name': item.get('name'),
+                    'category': item.get('category', 'AI前沿')
+                })
             elif isinstance(item, str) and item.strip():
-                cls.REDDIT_SUBREDDITS.append(item.strip())
+                cls.REDDIT_SUBREDDITS.append({'name': item.strip(), 'category': 'AI前沿'})
                 
         # Parse Keywords
         cls.KEYWORDS = [k for k in data.get('keywords', []) if isinstance(k, str)]
