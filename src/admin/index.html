@@ -165,6 +165,53 @@
             display: flex;
             justify-content: flex-end;
             backdrop-filter: blur(5px);
+            gap: 10px;
+        }
+
+        /* Modal Settings */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .setting-btn {
+            background: #64748b;
+            color: white;
         }
     </style>
 </head>
@@ -223,14 +270,39 @@
         </div>
 
         <div class="actions">
+            <button class="setting-btn" onclick="openSettings()">⚙️ 设置</button>
             <button class="btn-primary" onclick="saveConfig()"
-                style="font-size: 1.1rem; padding: 10px 30px;">保存配置</button>
+                style="font-size: 1.1rem; padding: 10px 30px;">保存并同步</button>
             <button class="btn-primary" onclick="runCollection()"
-                style="font-size: 1.1rem; padding: 10px 30px; background-color: #f59e0b; margin-left: 10px;">立即采集</button>
+                style="font-size: 1.1rem; padding: 10px 30px; background-color: #f59e0b;">立即部署</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h3>GitHub 配置</h3>
+            <p style="font-size: 0.85rem; color: #64748b;">需要 GitHub Personal Access Token 来同步配置。Token 仅保存在浏览器本地。</p>
+            <label>GitHub Token:</label>
+            <input type="password" id="gh-token" placeholder="ghp_********************">
+            <label>仓库路径 (owner/repo):</label>
+            <input type="text" id="gh-repo" placeholder="moseing/daily-report-project">
+            <div class="modal-footer">
+                <button onclick="closeSettings()">取消</button>
+                <button class="btn-primary" onclick="saveSettings()">保存设置</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // GitHub API Configuration
+        const GH_CONFIG = {
+            token: localStorage.getItem('gh_token') || '',
+            repo: localStorage.getItem('gh_repo') || 'moseing/daily-report-project',
+            path: 'sources.json'
+        };
+
+        let currentFileSha = '';
         let configData = {
             rss: [],
             reddit_subreddits: [],
@@ -239,12 +311,45 @@
 
         // Load Config
         async function loadConfig() {
+            // Check if we are in Local mode or GitHub mode
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+            if (isLocal && !GH_CONFIG.token) {
+                console.log("Detecting localhost, trying local API...");
+                try {
+                    const res = await fetch('/api/config');
+                    if (res.ok) {
+                        configData = await res.json();
+                        renderAll();
+                        return;
+                    }
+                } catch (e) {
+                    console.log("Local API not available, falling back to GitHub/Mock.");
+                }
+            }
+
+            if (!GH_CONFIG.token) {
+                alert('请先点击左下角按钮配置 GitHub Token！');
+                return;
+            }
+
             try {
-                const res = await fetch('/api/config');
-                configData = await res.json();
-                renderAll();
+                const url = `https://api.github.com/repos/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `token ${GH_CONFIG.token}` }
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    currentFileSha = data.sha;
+                    const content = decodeURIComponent(escape(atob(data.content)));
+                    configData = JSON.parse(content);
+                    renderAll();
+                } else {
+                    alert('获取 GitHub 文件失败: ' + (data.message || '未知错误'));
+                }
             } catch (e) {
-                alert('加载配置失败: ' + e);
+                alert('网络请求失败: ' + e);
             }
         }
 
@@ -385,38 +490,110 @@
         }
 
         async function saveConfig() {
+            if (!GH_CONFIG.token) {
+                // Check if local dev
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (isLocal) {
+                    try {
+                        const res = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(configData)
+                        });
+                        if (res.ok) { alert('本地配置已保存!'); loadConfig(); return; }
+                    } catch (e) { }
+                }
+                alert('请配置 GitHub Token 后再保存');
+                return;
+            }
+
             try {
-                const res = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(configData)
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(configData, null, 2))));
+                const url = `https://api.github.com/repos/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
+
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GH_CONFIG.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Update sources.json via Admin Dashboard',
+                        content: content,
+                        sha: currentFileSha
+                    })
                 });
+
+                const data = await res.json();
                 if (res.ok) {
-                    alert('配置已保存! 🎉');
-                    // Reload to ensure consistency
-                    loadConfig();
+                    currentFileSha = data.content.sha;
+                    alert('配置已同步至 GitHub! 🚀\n这会自动触发重新部署，请稍候 2-3 分钟查看更新。');
                 } else {
-                    alert('保存失败.');
+                    alert('同步失败: ' + data.message);
                 }
             } catch (e) {
-                alert('保存错误: ' + e);
+                alert('保存异常: ' + e);
             }
         }
 
         async function runCollection() {
-            if (!confirm("确定要立即运行一次数据采集吗？这可能需要几分钟时间。")) return;
+            if (!GH_CONFIG.token) {
+                alert('请先配置 GitHub Token');
+                return;
+            }
+            if (!confirm("确定要手动触发 GitHub 部署流吗？项目将重新抓取并生成日报。")) return;
 
             try {
-                const res = await fetch('/api/run', { method: 'POST' });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('已触发后台采集任务。请留意终端输出或稍后刷新页面查看结果。');
+                // Trigger GitHub Actions dispatch
+                const url = `https://api.github.com/repos/${GH_CONFIG.repo}/actions/workflows/deploy.yml/dispatches`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${GH_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({ ref: 'main' })
+                });
+
+                if (res.status === 204) {
+                    alert('工作流触发成功！🚀\n部署任务已在后台排队。');
                 } else {
-                    alert('触发失败: ' + data.message);
+                    const data = await res.json();
+                    alert('触发失败: ' + (data.message || res.statusText));
                 }
             } catch (e) {
-                alert('请求错误: ' + e);
+                alert('请求异常: ' + e);
             }
+        }
+
+        // Settings Logic
+        function openSettings() {
+            document.getElementById('gh-token').value = GH_CONFIG.token;
+            document.getElementById('gh-repo').value = GH_CONFIG.repo;
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function saveSettings() {
+            const token = document.getElementById('gh-token').value.trim();
+            const repo = document.getElementById('gh-repo').value.trim();
+
+            if (!token || !repo) {
+                alert('请填写完整信息');
+                return;
+            }
+
+            localStorage.setItem('gh_token', token);
+            localStorage.setItem('gh_repo', repo);
+
+            GH_CONFIG.token = token;
+            GH_CONFIG.repo = repo;
+
+            closeSettings();
+            loadConfig(); // Reload with new token
         }
 
         // Init
