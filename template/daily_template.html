@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ title }} | AI Sports Daily</title>
+    <meta name="description" content="AI运动日报 - 每日精选AI前沿、运动科学与产业动态">
+
+    <!-- Open Graph for WeChat/Social -->
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:description" content="{{ headline_count }}篇今日头条 | {{ total_count }}篇精选文章">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <!-- Placeholder image if no article image available -->
+    <meta property="og:image" content="../static/og-image.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Roboto+Mono:wght@400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../static/style.css">
+    <script src="../static/filter.js" defer></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="site-header">
+            <a href="../index.html" class="back-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </a>
+            <h1>{{ date_str }}</h1>
+            <div class="theme-toggle" id="themeToggle">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="12" cy="12" r="5" />
+                    <path
+                        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                </svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </div>
+        </header>
+
+        <!-- Filter Bar -->
+        <nav class="filter-bar">
+            <button class="filter-btn active" data-category="all">全部</button>
+            <button class="filter-btn" data-category="ai">AI前沿</button>
+            <button class="filter-btn" data-category="science">运动科学</button>
+            <button class="filter-btn" data-category="gear">装备评测</button>
+            <button class="filter-btn" data-category="business">商业投资</button>
+        </nav>
+
+        <main class="content-wrapper">
+            <!-- Headline Section (Importance >= 8) -->
+            {% if headlines %}
+            <section class="section-headlines">
+                <h2 class="section-title">🔥 今日头条</h2>
+                <div class="cards-grid">
+                    {% for article in headlines %}
+                    <article class="card headline-card category-{{ article.category_code }}">
+                        <div class="card-header">
+                            <span class="category-tag">{{ article.category }}</span>
+                            <span class="score-tag">★ {{ article.importance }}</span>
+                        </div>
+                        <h3 class="card-title"><a href="{{ article.url }}" target="_blank">{{ article.title }}</a></h3>
+                        <p class="card-summary">{{ article.summary }}</p>
+                        <div class="card-footer">
+                            <span class="source">{{ article.source }}</span>
+                            <div class="tags">
+                                {% for tag in article.tags %}
+                                <span class="tag">#{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Standard List Section -->
+            <section class="section-list">
+                <h2 class="section-title">📅 最新资讯</h2>
+                <div class="list-container">
+                    {% for article in all_articles %}
+                    <article class="list-item category-border-{{ article.category_code }}"
+                        data-category="{{ article.category_code }}">
+                        <div class="item-content">
+                            <div class="item-meta">
+                                <span class="category-text category-text-{{ article.category_code }}">{{
+                                    article.category }}</span>
+                                <span class="source">{{ article.source }}</span>
+                            </div>
+                            <h3 class="item-title"><a href="{{ article.url }}" target="_blank">{{ article.title }}</a>
+                            </h3>
+                            <p class="item-summary">{{ article.summary_short }}</p>
+                        </div>
+                        <div class="item-score">{{ article.importance }}</div>
+                    </article>
+                    {% endfor %}
+                </div>
+
+                {% if has_more %}
+                <div class="archive-link-container">
+                    <p>还有 {{ hidden_count }} 篇文章未显示</p>
+                    <a href="archive.json" target="_blank" class="archive-btn">查看完整数据 (JSON)</a>
+                </div>
+                {% endif %}
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>Generated at {{ generated_time }}</p>
+            <p>Data sources: RSS & Reddit | Powered by Ollama</p>
+        </footer>
+
+        <!-- Back to Top -->
+        <button id="backToTop" class="back-to-top" aria-label="Back to top">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 15l-6-6-6 6" />
+            </svg>
+        </button>
+    </div>
+</body>
+
+</html>

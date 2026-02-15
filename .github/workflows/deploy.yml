@@ -1,0 +1,58 @@
+name: Deploy AI Sports Daily
+
+on:
+  schedule:
+    # 02:00 UTC = 10:00 UTC+8 (Beijing Time)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # Ensure jinja2 is installed for testing (in case it's missed in requirements)
+        pip install jinja2 requests beautifulsoup4 praw
+
+    - name: Install Ollama
+      run: |
+        curl -fsSL https://ollama.com/install.sh | sh
+        ollama --version
+
+    - name: Pull Mistral Model
+      run: |
+        ollama serve &
+        sleep 5
+        ollama pull mistral
+        
+    - name: Generate Daily Report
+      run: |
+        # Ensure ollama is running in background if not already
+        # Execute main script (assuming main.py calls the html_builder)
+        # For now, we will run the html_builder.py directly as a placeholder
+        # In production this would be: python src/main.py
+        
+        export PYTHONPATH=$PYTHONPATH:.
+        python src/generator/html_builder.py
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./output
+        force_orphan: true # Keep history clean on gh-pages branch

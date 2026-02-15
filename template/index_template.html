@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Sports Daily 档案馆</title>
+    <meta name="description" content="AI运动日报历史归档">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Roboto+Mono:wght@400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="site-header centered">
+            <div class="logo">🏃‍♂️🤖</div>
+            <h1>AI运动日报档案馆</h1>
+            <div class="theme-toggle" id="themeToggle">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="12" cy="12" r="5" />
+                    <path
+                        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                </svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </div>
+        </header>
+
+        <main class="content-wrapper">
+            <!-- Recent 30 Days Calendar View -->
+            <section class="section-calendar">
+                <h2 class="section-title">📅 最近30天</h2>
+                <div class="calendar-grid">
+                    {% for day in calendar_days %}
+                    <a href="{{ day.link }}"
+                        class="calendar-day {% if day.has_report %}has-report{% else %}empty{% endif %}">
+                        <span class="day-number">{{ day.day }}</span>
+                        {% if day.has_report %}
+                        <span class="day-dot"></span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Complete List -->
+            <section class="section-archive">
+                <h2 class="section-title">📚 历史归档</h2>
+                <div class="archive-list">
+                    {% for report in archives %}
+                    <a href="{{ report.link }}" class="archive-item">
+                        <span class="archive-date">{{ report.date_str }}</span>
+                        <div class="archive-meta">
+                            <span class="archive-count">{{ report.count }} 篇</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M9 18l6-6-6-6" />
+                            </svg>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 AI Sports Daily</p>
+        </footer>
+    </div>
+    <script>
+        // Simple Dark/Light mode toggle for index page (shared logic in filter.js usually, but included here for independence)
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            html.setAttribute('data-theme', 'dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+        });
+    </script>
+</body>
+
+</html>
