@@ -13,7 +13,11 @@ class Config:
         "https://36kr.com/feed",
         "https://sspai.com/feed",
         # Sports & Running
-        "https://www.runnersworld.com/rss/all.xml", 
+        "https://www.runnersworld.com/rss/all.xml",
+        # Reddit RSS (Added by user)
+        "https://www.reddit.com/r/MachineLearning/.rss",
+        "https://www.reddit.com/r/LocalLLaMA/.rss",
+        "https://www.reddit.com/r/artificial/.rss"
     ]
 
     # Reddit Subreddits to monitor
