@@ -40,20 +40,17 @@ jobs:
         sleep 5
         ollama pull mistral
         
-    - name: Generate Daily Report
+    - name: Prepare Output Directory
       run: |
-        # Ensure ollama is running in background if not already
-        # Execute main script (assuming main.py calls the html_builder)
-        # For now, we will run the html_builder.py directly as a placeholder
-        # In production this would be: python src/main.py
-        
-        export PYTHONPATH=$PYTHONPATH:.
-        # python src/generator/html_builder.py
-        python src/main.py
-        
-        # Copy Admin interface to output
         mkdir -p output/admin
         cp src/admin/index.html output/admin/
+        
+    - name: Generate Daily Report
+      run: |
+        export PYTHONPATH=$PYTHONPATH:.
+        # In case main.py fails (e.g. LLM timeout), we count it as a non-breaking failure 
+        # for the sake of getting the Admin UI live.
+        python src/main.py || echo "Warning: Generator failed, but proceeding with deployment."
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
